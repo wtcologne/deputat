@@ -23,6 +23,8 @@ export const AvailabilityGrid: React.FC<AvailabilityGridProps> = ({
   const currentUser = useUsersStore((state) =>
     state.users.find((user) => user.id === (currentUserId ?? '')),
   );
+  const usersIsLoading = useUsersStore((state) => state.isLoading);
+  const loadUsers = useUsersStore((state) => state.loadUsers);
   const toggleAvailability = useAvailabilityStore((state) => state.toggleAvailability);
   const availabilityVersion = useAvailabilityStore((state) => state.availabilityVersion);
   const availabilityByWeek = useAvailabilityStore((state) => state.availabilityByWeek);
@@ -53,15 +55,22 @@ export const AvailabilityGrid: React.FC<AvailabilityGridProps> = ({
   }, [currentUserId, weekAvailability]);
 
   useEffect(() => {
-    // Load data and subscribe to real-time updates
-    loadWeekAvailability(weekStartISO);
-    subscribeToWeek(weekStartISO);
+    // Ensure users are loaded first
+    loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    // Only load availability data after users are loaded
+    if (!usersIsLoading) {
+      loadWeekAvailability(weekStartISO);
+      subscribeToWeek(weekStartISO);
+    }
     
     // Cleanup subscription on unmount
     return () => {
       unsubscribeFromWeek(weekStartISO);
     };
-  }, [weekStartISO, loadWeekAvailability, subscribeToWeek, unsubscribeFromWeek]);
+  }, [weekStartISO, loadWeekAvailability, subscribeToWeek, unsubscribeFromWeek, usersIsLoading]);
 
   const handleToggle = async (day: Weekday, slotId: string) => {
     if (!currentUserId || isToggling) {

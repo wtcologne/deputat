@@ -34,6 +34,12 @@ export const useUsersStore = create<UsersState>((set, get) => ({
       return;
     }
 
+    // Prevent multiple simultaneous loads
+    const currentState = get();
+    if (currentState.isLoading) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const users = await usersService.getAll();
