@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useMemo } from 'react';
-
 import { PlanGrid } from '@/components/PlanGrid';
-import { WeekSelector } from '@/components/WeekSelector';
-import { getWeekStartISO } from '@/utils/dates';
 
 export default function PlanPage() {
-  // Memoize to avoid hydration mismatch - calculate once per mount
-  const initialWeekStartISO = useMemo(() => getWeekStartISO(), []);
-  const [weekStartISO, setWeekStartISO] = useState(initialWeekStartISO);
+  // Fixed week - always show the week of November 2, 2025
+  const weekStartISO = '2025-11-02';
 
   return (
     <div className="flex flex-col gap-6">
@@ -20,8 +15,6 @@ export default function PlanPage() {
           Zeitblöcke und kannst freie Slots erkennen.
         </p>
       </section>
-
-      <WeekSelector weekStartISO={weekStartISO} onChange={setWeekStartISO} />
 
       <PlanGrid weekStartISO={weekStartISO} />
     </div>

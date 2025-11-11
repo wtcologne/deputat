@@ -1,20 +1,17 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
-import { WeekSelector } from '@/components/WeekSelector';
 import { useUsersStore } from '@/store/users';
-import { getWeekStartISO } from '@/utils/dates';
 
 export default function MyAvailabilityPage() {
   const users = useUsersStore((state) => state.users);
   const addUser = useUsersStore((state) => state.addUser);
   const isLoading = useUsersStore((state) => state.isLoading);
   const error = useUsersStore((state) => state.error);
-  // Memoize to avoid hydration mismatch - calculate once per mount
-  const initialWeekStartISO = useMemo(() => getWeekStartISO(), []);
-  const [weekStartISO, setWeekStartISO] = useState(initialWeekStartISO);
+  // Fixed week - always show the week of November 2, 2025
+  const weekStartISO = '2025-11-02';
   const defaultUserId = users[0]?.id ?? null;
   const [selectedUserId, setSelectedUserId] = useState<string | null>(defaultUserId);
   const [newUserName, setNewUserName] = useState<string>('');
@@ -124,8 +121,6 @@ export default function MyAvailabilityPage() {
           </form>
         </div>
       </section>
-
-      <WeekSelector weekStartISO={weekStartISO} onChange={setWeekStartISO} />
 
       <AvailabilityGrid
         weekStartISO={weekStartISO}
