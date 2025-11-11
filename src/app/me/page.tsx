@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
+import { WeekSelector } from '@/components/WeekSelector';
 import { useUsersStore } from '@/store/users';
 import { getWeekStartISO } from '@/utils/dates';
 
@@ -12,7 +13,8 @@ export default function MyAvailabilityPage() {
   const isLoading = useUsersStore((state) => state.isLoading);
   const error = useUsersStore((state) => state.error);
   // Memoize to avoid hydration mismatch - calculate once per mount
-  const weekStartISO = useMemo(() => getWeekStartISO(), []);
+  const initialWeekStartISO = useMemo(() => getWeekStartISO(), []);
+  const [weekStartISO, setWeekStartISO] = useState(initialWeekStartISO);
   const defaultUserId = users[0]?.id ?? null;
   const [selectedUserId, setSelectedUserId] = useState<string | null>(defaultUserId);
   const [newUserName, setNewUserName] = useState<string>('');
@@ -122,6 +124,8 @@ export default function MyAvailabilityPage() {
           </form>
         </div>
       </section>
+
+      <WeekSelector weekStartISO={weekStartISO} onChange={setWeekStartISO} />
 
       <AvailabilityGrid
         weekStartISO={weekStartISO}
