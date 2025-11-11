@@ -12,15 +12,23 @@ export interface AvailabilityRow {
 
 export const availabilityService = {
   async getByWeek(weekStartISO: string): Promise<Availability[]> {
+    console.log('🔍 Fetching availability for week:', weekStartISO);
+    
     const { data, error } = await supabase
       .from('availability')
       .select('user_id, week_start_iso, day, slot_id')
       .eq('week_start_iso', weekStartISO);
 
     if (error) {
-      console.error('Error fetching availability:', error);
+      console.error('❌ Error fetching availability:', error);
       return [];
     }
+
+    console.log('✅ Availability data fetched:', {
+      weekStartISO,
+      rowCount: data?.length || 0,
+      data: data,
+    });
 
     return (data || []).map((row) => ({
       userId: row.user_id,

@@ -52,9 +52,18 @@ export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className }) =
   const availabilityBySlot = useMemo(() => {
     const map = new Map<SlotKey, typeof users>();
 
+    console.log('🔍 PlanGrid Debug:', {
+      weekStartISO,
+      availabilityCount: availability.length,
+      usersCount: users.length,
+      availability: availability,
+      users: users,
+    });
+
     availability.forEach((entry) => {
       const user = usersById.get(entry.userId);
       if (!user) {
+        console.warn('⚠️ User not found for availability entry:', entry);
         return;
       }
 
@@ -63,8 +72,10 @@ export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className }) =
       map.set(key, [...list, user]);
     });
 
+    console.log('📊 Availability by slot:', map);
+
     return map;
-  }, [availability, usersById]);
+  }, [availability, usersById, weekStartISO, users]);
 
   return (
     <div className={clsx('rounded-3xl border border-slate-200/60 bg-white/70 p-6 shadow-md', className)}>

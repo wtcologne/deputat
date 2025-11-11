@@ -10,15 +10,22 @@ export interface UserRow {
 
 export const usersService = {
   async getAll(): Promise<User[]> {
+    console.log('🔍 Fetching users...');
+    
     const { data, error } = await supabase
       .from('users')
       .select('id, name, color')
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       return [];
     }
+
+    console.log('✅ Users fetched:', {
+      userCount: data?.length || 0,
+      users: data,
+    });
 
     return (data || []) as User[];
   },
