@@ -25,18 +25,12 @@ interface UsersState {
 
 export const useUsersStore = create<UsersState>((set, get) => ({
   users: [],
-  isLoading: true,
+  isLoading: false,
   error: null,
   
   loadUsers: async () => {
     if (typeof window === 'undefined') {
       set({ users: [], isLoading: false });
-      return;
-    }
-
-    // Prevent multiple simultaneous loads
-    const currentState = get();
-    if (currentState.isLoading) {
       return;
     }
 

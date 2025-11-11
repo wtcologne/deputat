@@ -19,8 +19,6 @@ type SlotKey = `${Weekday}-${string}`;
 
 export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className }) => {
   const users = useUsersStore((state) => state.users);
-  const usersIsLoading = useUsersStore((state) => state.isLoading);
-  const loadUsers = useUsersStore((state) => state.loadUsers);
   const availabilityVersion = useAvailabilityStore((state) => state.availabilityVersion);
   const availabilityByWeek = useAvailabilityStore((state) => state.availabilityByWeek);
   const loadWeekAvailability = useAvailabilityStore((state) => state.loadWeekAvailability);
@@ -33,22 +31,15 @@ export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className }) =
   
   useEffect(() => {
     setIsMounted(true);
-    // Ensure users are loaded first
-    loadUsers();
-  }, [loadUsers]);
-  
-  useEffect(() => {
-    // Only load availability data after users are loaded
-    if (!usersIsLoading) {
-      loadWeekAvailability(weekStartISO);
-      subscribeToWeek(weekStartISO);
-    }
+    // Load data and subscribe to real-time updates
+    loadWeekAvailability(weekStartISO);
+    subscribeToWeek(weekStartISO);
     
     // Cleanup subscription on unmount
     return () => {
       unsubscribeFromWeek(weekStartISO);
     };
-  }, [weekStartISO, loadWeekAvailability, subscribeToWeek, unsubscribeFromWeek, usersIsLoading]);
+  }, [weekStartISO, loadWeekAvailability, subscribeToWeek, unsubscribeFromWeek]);
   
   // Extract week-specific data with useMemo to avoid creating new references on every render
   const availability = useMemo(() => {
