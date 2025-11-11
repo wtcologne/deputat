@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
 import { useUsersStore } from '@/store/users';
