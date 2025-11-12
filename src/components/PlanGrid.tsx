@@ -13,11 +13,12 @@ import { UserBadge } from './UserBadge';
 interface PlanGridProps {
   weekStartISO: string;
   className?: string;
+  id?: string;
 }
 
 type SlotKey = `${Weekday}-${string}`;
 
-export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className }) => {
+export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className, id }) => {
   const users = useUsersStore((state) => state.users);
   const availabilityVersion = useAvailabilityStore((state) => state.availabilityVersion);
   const availabilityByWeek = useAvailabilityStore((state) => state.availabilityByWeek);
@@ -78,7 +79,7 @@ export const PlanGrid: React.FC<PlanGridProps> = ({ weekStartISO, className }) =
   }, [availability, usersById, weekStartISO, users]);
 
   return (
-    <div className={clsx('rounded-3xl border border-slate-200/60 bg-white/70 p-6 shadow-md', className)}>
+    <div id={id} className={clsx('rounded-3xl border border-slate-200/60 bg-white/70 p-6 shadow-md', className)}>
       <table className="w-full table-fixed border-spacing-4">
         <thead>
           <tr>
