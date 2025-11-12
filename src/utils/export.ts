@@ -33,7 +33,10 @@ export async function exportToExcel(data: ExportData): Promise<void> {
     }
   });
   
-  // Create worksheet data
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+  
+  // ===== WORKSHEET 1: Stundenplan =====
   const wsData: (string | number)[][] = [];
   
   // Header row
@@ -56,8 +59,6 @@ export async function exportToExcel(data: ExportData): Promise<void> {
     wsData.push(row);
   });
   
-  // Create workbook
-  const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   
   // Set column widths
@@ -70,14 +71,168 @@ export async function exportToExcel(data: ExportData): Promise<void> {
     { wch: 25 },
   ];
   
-  // Add worksheet to workbook
   XLSX.utils.book_append_sheet(wb, ws, 'Stundenplan');
+  
+  // ===== WORKSHEET 2: Verfügbarkeiten nach Usern =====
+  const userData: (string | number)[][] = [];
+  
+  // Header row
+  userData.push(['User', 'Tag', 'Zeitslot', 'Von', 'Bis']);
+  
+  // Sort users by name for consistent ordering
+  const sortedUsers = [...users].sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Group availability by user
+  sortedUsers.forEach(user => {
+    const userAvailability = availability
+      .filter(entry => entry.userId === user.id)
+      .sort((a, b) => {
+        // Sort by day first
+        const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri'];
+        const dayDiff = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+        if (dayDiff !== 0) return dayDiff;
+        // Then by slot
+        return a.slotId.localeCompare(b.slotId);
+      });
+    
+    if (userAvailability.length === 0) {
+      // Show user with no availability
+      userData.push([user.name, '-', '-', '-', '-']);
+    } else {
+      userAvailability.forEach(entry => {
+        const dayLabel = WEEK_DAYS.find(d => d.id === entry.day)?.label || entry.day;
+        const slot = TIME_SLOTS.find(s => s.id === entry.slotId);
+        const timeFrom = slot?.start || '-';
+        const timeTo = slot?.end || '-';
+        
+        userData.push([
+          user.name,
+          dayLabel,
+          slot?.label || entry.slotId,
+          timeFrom,
+          timeTo,
+        ]);
+      });
+    }
+    
+    // Add empty row between users for better readability
+    if (user !== sortedUsers[sortedUsers.length - 1]) {
+      userData.push(['', '', '', '', '']);
+    }
+  });
+  
+  const ws2 = XLSX.utils.aoa_to_sheet(userData);
+  
+  // Set column widths
+  ws2['!cols'] = [
+    { wch: 20 },
+    { wch: 15 },
+    { wch: 20 },
+    { wch: 10 },
+    { wch: 10 },
+  ];
+  
+  XLSX.utils.book_append_sheet(wb, ws2, 'Verfügbarkeiten');
   
   // Generate file name
   const fileName = `Stundenplan_${weekStartISO}.xlsx`;
   
   // Download file
   XLSX.writeFile(wb, fileName);
+}
+
+/**
+ * Normalize styles in cloned element to convert oklab/oklch to RGB
+ * This function is called in the onclone callback, so we need to work with the cloned document
+ */
+function normalizeStylesForPDF(clonedElement: HTMLElement, originalElement: HTMLElement): void {
+  // Get all elements from both original and cloned
+  const originalElements = [originalElement, ...Array.from(originalElement.querySelectorAll('*'))];
+  const clonedElements = [clonedElement, ...Array.from(clonedElement.querySelectorAll('*'))];
+  
+  // Match elements by their structure/index
+  originalElements.forEach((originalEl, index) => {
+    const clonedEl = clonedElements[index] as HTMLElement;
+    if (!clonedEl || !originalEl) return;
+    
+    try {
+      // Get computed styles from the original element
+      const computedStyle = window.getComputedStyle(originalEl as Element);
+      
+      // Helper to convert any color to RGB
+      const convertToRGB = (colorValue: string): string | null => {
+        if (!colorValue || colorValue === 'transparent' || colorValue === 'rgba(0, 0, 0, 0)') {
+          return null;
+        }
+        
+        // Already RGB format
+        if (colorValue.startsWith('rgb')) return colorValue;
+        
+        // HEX format
+        if (colorValue.startsWith('#')) return colorValue;
+        
+        // Modern color formats (oklab, oklch) - render to get RGB
+        if (colorValue.includes('oklab') || colorValue.includes('oklch') || colorValue.includes('color(')) {
+          try {
+            // Create a temporary element in the original document to get rendered color
+            const temp = document.createElement('span');
+            temp.style.setProperty('color', colorValue, 'important');
+            temp.style.position = 'absolute';
+            temp.style.visibility = 'hidden';
+            temp.style.width = '1px';
+            temp.style.height = '1px';
+            document.body.appendChild(temp);
+            
+            const rendered = window.getComputedStyle(temp).color;
+            document.body.removeChild(temp);
+            
+            if (rendered && rendered.startsWith('rgb')) {
+              return rendered;
+            }
+          } catch (e) {
+            // Ignore conversion errors
+          }
+        }
+        
+        return null;
+      };
+      
+      // Convert and apply background color
+      const bgColor = computedStyle.backgroundColor;
+      if (bgColor) {
+        const rgb = convertToRGB(bgColor);
+        if (rgb) {
+          clonedEl.style.backgroundColor = rgb;
+        } else if (!bgColor.includes('oklab') && !bgColor.includes('oklch')) {
+          clonedEl.style.backgroundColor = bgColor;
+        }
+      }
+      
+      // Convert and apply text color
+      const textColor = computedStyle.color;
+      if (textColor) {
+        const rgb = convertToRGB(textColor);
+        if (rgb) {
+          clonedEl.style.color = rgb;
+        } else if (!textColor.includes('oklab') && !textColor.includes('oklch')) {
+          clonedEl.style.color = textColor;
+        }
+      }
+      
+      // Convert and apply border color
+      const borderColor = computedStyle.borderColor;
+      if (borderColor && borderColor !== 'transparent' && borderColor !== 'rgba(0, 0, 0, 0)') {
+        const rgb = convertToRGB(borderColor);
+        if (rgb) {
+          clonedEl.style.borderColor = rgb;
+        } else if (!borderColor.includes('oklab') && !borderColor.includes('oklch')) {
+          clonedEl.style.borderColor = borderColor;
+        }
+      }
+    } catch (e) {
+      // Silently ignore errors for individual elements
+    }
+  });
 }
 
 /**
@@ -90,10 +245,19 @@ export async function exportToPDF(elementId: string, weekStartISO: string): Prom
   }
   
   try {
-    // Create canvas from element
+    // Create canvas from element with onclone callback to normalize styles
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
       useCORS: true,
+      scale: 1,
+      logging: false,
+      onclone: (clonedDoc: Document) => {
+        // Find the cloned element in the cloned document
+        const clonedElement = clonedDoc.getElementById(elementId);
+        if (clonedElement) {
+          normalizeStylesForPDF(clonedElement as HTMLElement, element);
+        }
+      },
     } as any);
     
     const imgData = canvas.toDataURL('image/png');
