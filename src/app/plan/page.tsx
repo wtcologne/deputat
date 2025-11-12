@@ -6,7 +6,6 @@ import { ExportButtons } from '@/components/ExportButtons';
 export default function PlanPage() {
   // Fixed week - always show the week of November 2, 2025
   const weekStartISO = '2025-11-02';
-  const gridId = 'plan-grid-export';
 
   return (
     <div className="flex flex-col gap-6">
@@ -19,11 +18,11 @@ export default function PlanPage() {
               Zeitblöcke und kannst freie Slots erkennen.
             </p>
           </div>
-          <ExportButtons weekStartISO={weekStartISO} gridElementId={gridId} />
+          <ExportButtons weekStartISO={weekStartISO} />
         </div>
       </section>
 
-      <PlanGrid weekStartISO={weekStartISO} id={gridId} />
+      <PlanGrid weekStartISO={weekStartISO} />
     </div>
   );
 }
